@@ -32,7 +32,7 @@ export function mostrarAlumnos(alumnos) {
   console.log('');
 }
 
-export function agregarAlumno(alumnos, nombre) {
+export function agregarAlumno(alumnos, nombre, materias) {
   const alumnoExistente = buscarAlumnoPorNombre(alumnos, nombre);
 
   if (alumnoExistente) {
@@ -42,7 +42,7 @@ export function agregarAlumno(alumnos, nombre) {
     };
   }
 
-  alumnos.push([nombre, []]);
+  alumnos.push([nombre, materias]);
 
   return {
     exito: true,
@@ -86,6 +86,15 @@ export function agregarOModificarMateria(alumnos, nombreAlumno, nombreMateria, n
 export function calcularPromedioAlumno(alumno) {
   const materias = alumno[1];
 
+  if (materias.length === 0) {
+    return 0;
+  }
+
+  const suma = materias.reduce((acumulador, materia) => acumulador + materia[1], 0);
+  return suma / materias.length;
+}
+
+export function calcularPromedioDesdeMaterias(materias) {
   if (materias.length === 0) {
     return 0;
   }
