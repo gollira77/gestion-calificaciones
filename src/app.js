@@ -1,5 +1,5 @@
-import alumnos from './data/alumnos.js';
 import { preguntar, cerrarInput } from './utils/input.js';
+import { leerAlumnos, guardarAlumnos } from './utils/archivo.js';
 
 import {
   mostrarAlumnos,
@@ -9,16 +9,20 @@ import {
   obtenerAlumnoConMejorPromedio,
   ordenarAlumnosPorPromedio,
   esNotaValida,
-  calcularPromedioDesdeMaterias
+  calcularPromedioDesdeMaterias,
+  calcularPromedioAlumno
 } from './services/alumnosService.js';
 
+let alumnos = leerAlumnos();
 
 async function verAlumnos() {
+  alumnos = leerAlumnos();
   mostrarAlumnos(alumnos);
 }
 
-
 async function agregarNuevoAlumno() {
+  alumnos = leerAlumnos();
+
   const nombre = await preguntar('\nIngrese el nombre del alumno: ');
 
   if (!nombre) {
@@ -53,9 +57,7 @@ async function agregarNuevoAlumno() {
   for (let i = 0; i < cantidadMaterias; i++) {
     console.log(`\nMateria ${i + 1}:`);
 
-    const nombreMateria = await preguntar(
-      'Ingrese el nombre de la materia: '
-    );
+    const nombreMateria = await preguntar('Ingrese el nombre de la materia: ');
 
     if (!nombreMateria) {
       console.log('Nombre inválido.\n');
@@ -68,19 +70,16 @@ async function agregarNuevoAlumno() {
     );
 
     if (materiaRepetida) {
-      console.log('Materia ya cargada.');
+      console.log('Esa materia ya fue cargada.\n');
       i--;
       continue;
     }
 
-    const notaIngresada = await preguntar(
-      'Ingrese la nota (0 a 10): '
-    );
-
+    const notaIngresada = await preguntar('Ingrese la nota (0 a 10): ');
     const nota = Number(notaIngresada);
 
     if (!esNotaValida(nota)) {
-      console.log('Nota inválida.');
+      console.log('Nota inválida.\n');
       i--;
       continue;
     }
@@ -91,20 +90,26 @@ async function agregarNuevoAlumno() {
   const resultado = agregarAlumno(alumnos, nombre, materias);
 
   if (resultado.exito) {
+    guardarAlumnos(alumnos);
+
     const promedio = calcularPromedioDesdeMaterias(materias);
 
-    console.log(`\nAlumno agregado correctamente`);
+    console.log(`\n${resultado.mensaje}`);
     console.log(`Promedio inicial: ${promedio.toFixed(2)}\n`);
   } else {
-    console.log(resultado.mensaje);
+    console.log(`${resultado.mensaje}\n`);
   }
 }
 
-
 async function agregarOModificarNotas() {
-  const nombreAlumno = await preguntar(
-    '\nIngrese el nombre del alumno: '
-  );
+  alumnos = leerAlumnos();
+
+  if (alumnos.length === 0) {
+    console.log('\nTodavía no se cargaron alumnos.\n');
+    return;
+  }
+
+  const nombreAlumno = await preguntar('\nIngrese el nombre del alumno: ');
 
   const alumno = buscarAlumnoPorNombre(alumnos, nombreAlumno);
 
@@ -113,14 +118,14 @@ async function agregarOModificarNotas() {
     return;
   }
 
-  const materia = await preguntar(
-    'Ingrese la materia: '
-  );
+  const materia = await preguntar('Ingrese la materia: ');
 
-  const notaIngresada = await preguntar(
-    'Ingrese la nota (0 a 10): '
-  );
+  if (!materia) {
+    console.log('La materia no puede estar vacía.\n');
+    return;
+  }
 
+  const notaIngresada = await preguntar('Ingrese la nota (0 a 10): ');
   const nota = Number(notaIngresada);
 
   if (!esNotaValida(nota)) {
@@ -135,15 +140,18 @@ async function agregarOModificarNotas() {
     nota
   );
 
+  guardarAlumnos(alumnos);
+
   console.log(resultado.mensaje + '\n');
 }
 
-
 async function mostrarMejorPromedio() {
+  alumnos = leerAlumnos();
+
   const resultado = obtenerAlumnoConMejorPromedio(alumnos);
 
   if (!resultado) {
-    console.log('No hay alumnos.\n');
+    console.log('\nTodavía no se cargaron alumnos.\n');
     return;
   }
 
@@ -152,18 +160,20 @@ async function mostrarMejorPromedio() {
   console.log(`Promedio: ${resultado.promedio.toFixed(2)}\n`);
 }
 
-
 async function mostrarOrdenados() {
+  alumnos = leerAlumnos();
+
+  if (alumnos.length === 0) {
+    console.log('\nTodavía no se cargaron alumnos.\n');
+    return;
+  }
+
   const ordenados = ordenarAlumnosPorPromedio(alumnos);
 
   console.log('\n=== ORDENADOS POR PROMEDIO ===');
 
   ordenados.forEach((alumno, index) => {
-    const materias = alumno[1];
-
-    const promedio =
-      materias.reduce((acc, m) => acc + m[1], 0) /
-      materias.length;
+    const promedio = calcularPromedioAlumno(alumno);
 
     console.log(
       `${index + 1}. ${alumno[0]} - Promedio: ${promedio.toFixed(2)}`
@@ -172,7 +182,6 @@ async function mostrarOrdenados() {
 
   console.log('');
 }
-
 
 function mostrarMenu() {
   console.log('==============================');
@@ -186,7 +195,6 @@ function mostrarMenu() {
   console.log('6. Salir');
 }
 
-
 async function iniciarPrograma() {
   let activo = true;
 
@@ -199,29 +207,24 @@ async function iniciarPrograma() {
       case '1':
         await verAlumnos();
         break;
-
       case '2':
         await agregarNuevoAlumno();
         break;
-
       case '3':
         await agregarOModificarNotas();
         break;
-
       case '4':
         await mostrarMejorPromedio();
         break;
-
       case '5':
         await mostrarOrdenados();
         break;
-
       case '6':
         activo = false;
+        console.log('\nSaliendo del sistema...\n');
         break;
-
       default:
-        console.log('Opción inválida\n');
+        console.log('\nOpción inválida.\n');
     }
   }
 

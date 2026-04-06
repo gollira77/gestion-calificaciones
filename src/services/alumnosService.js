@@ -6,11 +6,12 @@ export function buscarAlumnoPorNombre(alumnos, nombre) {
 
 export function mostrarAlumnos(alumnos) {
   if (alumnos.length === 0) {
-    console.log('\nNo hay alumnos registrados.\n');
+    console.log('\nTodavía no se cargaron alumnos.\n');
     return;
   }
 
   console.log('\n=== LISTA DE ALUMNOS ===');
+
   alumnos.forEach((alumno, index) => {
     const nombre = alumno[0];
     const materias = alumno[1];
@@ -77,6 +78,7 @@ export function agregarOModificarMateria(alumnos, nombreAlumno, nombreMateria, n
   }
 
   alumno[1].push([nombreMateria, nota]);
+
   return {
     exito: true,
     mensaje: 'Materia y nota agregadas correctamente.'
