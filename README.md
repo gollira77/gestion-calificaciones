@@ -42,7 +42,7 @@ npm start
 ## Versión Python
 
 ```bash
-VersionPython/
+cd VersionPython
 ```
 
 No tiene datos precargados
